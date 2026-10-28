@@ -32,19 +32,25 @@ namespace GraphicsTemplate::Core
     class LIB_API GraphicsTemplateCore
     {
     public:
+        KNODISCARD
         static bool IsInitialized();
         static void Initialize();
 
-        static const path& GetExePath(); 
-
+        KNODISCARD
         static Input* GetInput();
 
+        KNODISCARD
         static GraphicsContext* GetGraphicsContext();
+        KNODISCARD
         static Viewport* GetViewport();
+        KNODISCARD
         static Shader* Get3DShader();
+        KNODISCARD
         static Shader* Get2DShader();
+        KNODISCARD
         static Camera* GetCamera();
 
+        KNODISCARD
         static array<string, 4> GetFPS(f64 secondsToWait);
     };
 }

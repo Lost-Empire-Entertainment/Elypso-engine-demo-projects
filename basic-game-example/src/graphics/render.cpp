@@ -8,7 +8,6 @@
 #include "key_standards.hpp"
 
 #include "core/ee_core.hpp"
-#include "graphics/ee_window.hpp"
 #include "core/kw_core.hpp"
 #include "core/kw_input.hpp"
 #include "graphics/kw_window.hpp"
@@ -44,16 +43,12 @@ using KalaHeaders::KalaMath::SizeTarget;
 using KalaHeaders::KalaKeyStandards::KeyboardButton;
 
 using ElypsoEngine::Core::EngineCore;
-using ElypsoEngine::Graphics::EngineWindow;
 using KalaWindow::Core::KalaWindowCore;
 using KalaWindow::Core::Input;
-using KalaWindow::Graphics::ProcessWindow;
 using KalaWindow::Graphics::FileType;
 using KalaWindow::Graphics::Window_Global;
 using KalaGraphics::Graphics::VSyncState;
 using KalaGraphics::Graphics::GraphicsContext;
-using KalaGraphics::Graphics::HitTest;
-using KalaGraphics::Graphics::ViewportType;
 using KalaGraphics::Graphics::Viewport;
 using KalaGraphics::Graphics::Shader;
 using KalaGraphics::Graphics::Camera;
@@ -79,13 +74,8 @@ using GraphicsTemplate::Core::GraphicsTemplateCore;
 
 using std::string;
 using std::to_string;
-using std::format;
-using std::array;
 using std::vector;
 using std::filesystem::path;
-using std::chrono::steady_clock;
-using std::chrono::time_point;
-using std::chrono::duration;
 
 static bool isInitialized{};
 
@@ -132,7 +122,7 @@ namespace GraphicsTemplate::Graphics
         //sync before creating kg objects
         EngineCore::SyncID();
 
-        const path& exePath = GraphicsTemplateCore::GetExePath();
+        const path& exePath = KalaWindowCore::GetExePath();
 
         Viewport* viewport = GraphicsTemplateCore::GetViewport();
         Shader* primary3DShader = GraphicsTemplateCore::Get3DShader();

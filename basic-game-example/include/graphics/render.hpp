@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "core_utils.hpp"
 
 #include "core/kw_input.hpp"
@@ -25,20 +27,26 @@ namespace GraphicsTemplate::Graphics
     using KalaGraphics::Graphics::MeshData;
     using KalaGraphics::Graphics::Mesh;
 
+    using std::vector;
+
     class LIB_API Render
     {
     public:
+        KNODISCARD
         static bool IsInitialized();
         static void Initialize();
 
         static void Update();
 
+        KNODISCARD
         static Texture* GetRootTexture();
         static void SetRootTexture(Texture* newValue);
         
+        KNODISCARD
         static Texture* GetFallbackTexture();
         static void SetFallbackTexture(Texture* newValue);
 
+        KNODISCARD
         static Texture* GetGroundTexture();
         static void SetGroundTexture(Texture* newValue);
 
@@ -57,10 +65,12 @@ namespace GraphicsTemplate::Graphics
             Input* input,
             Shader* shader);
 
+        KNODISCARD
         static Texture* CreateTexture(
             Shader* shader,
             TextureData&& textureData);
 
+        KNODISCARD
         static Mesh* CreateMesh(
             Shader* shader,
             MeshData&& meshData);

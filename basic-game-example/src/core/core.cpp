@@ -51,14 +51,11 @@ using std::string;
 using std::to_string;
 using std::format;
 using std::array;
-using std::filesystem::path;
 using std::chrono::steady_clock;
 using std::chrono::time_point;
 using std::chrono::duration;
 
 static bool isInitialized{};
-
-static path exePath{};
 
 static EngineWindow* ew1{};
 static GraphicsContext* ew1_gctx{};
@@ -88,8 +85,6 @@ namespace GraphicsTemplate::Core
 
             return;
         }
-
-        exePath = KalaWindowCore::GetExePath();
 
         string err = EngineWindow::GetRegistry().GetContent(0, ew1, false);
         if (!err.empty())
@@ -202,7 +197,6 @@ namespace GraphicsTemplate::Core
         isInitialized = true;
     }
 
-    const path& GraphicsTemplateCore::GetExePath() { return exePath; }
     Input* GraphicsTemplateCore::GetInput() { return ew1_pw_input; }
     GraphicsContext* GraphicsTemplateCore::GetGraphicsContext() { return ew1_gctx; }
     Viewport* GraphicsTemplateCore::GetViewport() { return ew1_gctx_vp1; }
