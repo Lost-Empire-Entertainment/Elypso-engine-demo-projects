@@ -131,7 +131,11 @@ links_win_only:
     "shell32",
     "oleaut32",
     "advapi32",
-    "vulkan-"
+    "ole32",
+    "propsys",
+    "runtimeobject",
+    "dbghelp",
+    "${VULKAN_SDK}/Lib/vulkan-1.lib"
 links_lin:
     "X11",
     "Xi",
@@ -166,13 +170,13 @@ customflags: "export-compile-commands", "export-vscode-sln"
 #profile debug-windows
 buildtype: "debug"
 buildpath: "${dir_debug}windows"
-links: "${links_win_deb}", "${links_win_only}", "${links_win_and_win_on_linux}"
+links: "${links_win_deb}", "${links_win_only}"
 
 #profile release-windows
 buildtype: "release"
 buildpath: "${dir_release}windows"
 //customflags: no-console
-links: "${links_win_rel}", "${links_win_only}", "${links_win_and_win_on_linux}"
+links: "${links_win_rel}", "${links_win_only}"
 
 #profile debug-linux
 buildtype: "debug"
