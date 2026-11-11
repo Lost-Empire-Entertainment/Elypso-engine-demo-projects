@@ -14,14 +14,10 @@
 #include "core/core.hpp"
 #include "graphics/render.hpp"
 
-using KalaHeaders::KalaCore::ContainsValue;
-
 using KalaHeaders::KalaLog::Log;
 using KalaHeaders::KalaLog::LogType;
 
 using ElypsoEngine::Core::AppConfig;
-using ElypsoEngine::Export::SUPPORTED_EXTENSIONS;
-using ElypsoEngine::Export::UserBlock;
 using ElypsoEngine::Export::ExportData;
 
 using KalaWindow::Core::KalaWindowCore;
@@ -29,9 +25,7 @@ using KalaWindow::Core::KalaWindowCore;
 using GraphicsTemplate::Core::GraphicsTemplateCore;
 using GraphicsTemplate::Graphics::Render;
 
-using std::vector;
 using std::filesystem::path;
-using std::filesystem::recursive_directory_iterator;
 
 extern const AppConfig ElypsoEngine::Core::appConfig = 
 {
@@ -43,37 +37,14 @@ void ElypsoEngine::Core::Init()
 {
     //print all user system info for now always at the very top
 
-    Log::Print(KalaWindowCore::GetCPUInfoString());
-    Log::Print(" ");
-    Log::Print(KalaWindowCore::GetGPUInfoString());
-    Log::Print(" ");
-    Log::Print(KalaWindowCore::GetRAMInfoString(true));
-    Log::Print(" ");
-    Log::Print(KalaWindowCore::GetOSInfoString());
-    Log::Print(" ");
+    Log::Print(
+        KalaWindowCore::GetCPUInfoString() + "\n" +
+        KalaWindowCore::GetGPUInfoString() + "\n" +
+        KalaWindowCore::GetRAMInfoString(true) + "\n" +
+        KalaWindowCore::GetOSInfoString() + "\n");
 
     GraphicsTemplateCore::Initialize();
     Render::Initialize();
-
-    /*
-    vector<UserBlock> assetBlocks{};
-
-    for (const auto& p : recursive_directory_iterator(KalaWindowCore::GetExePath().parent_path()))
-    {
-        path thisPath = path(p);
-
-        if (!is_directory(thisPath)
-            && ContainsValue(SUPPORTED_EXTENSIONS, thisPath.extension()))
-        {
-            assetBlocks.push_back({ thisPath.stem(), thisPath });
-            Log::Print("@@@@@ path: " + thisPath.string());
-        }
-    }
-
-    ExportData::ExportAssetData(
-        KalaWindowCore::GetExePath().parent_path() / "out.edat",
-        assetBlocks);
-    */
 }
 
 void ElypsoEngine::Core::EarlyUpdate()
@@ -94,4 +65,18 @@ void ElypsoEngine::Core::Update()
 void ElypsoEngine::Core::LateUpdate()
 {
     
+}
+
+void ElypsoEngine::Core::Shutdown()
+{
+    /*
+    path lastImportedModel = Render::GetLastImportedModel();
+
+    if (!lastImportedModel.empty())
+    {
+        ExportData::ExportAssetData(
+            KalaWindowCore::GetExePath().parent_path() / "out.edat", 
+            {{ lastImportedModel.stem(), lastImportedModel }});
+    }
+    */
 }

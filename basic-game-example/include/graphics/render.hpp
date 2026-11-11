@@ -6,6 +6,7 @@
 #pragma once
 
 #include <vector>
+#include <filesystem>
 
 #include "core_utils.hpp"
 
@@ -28,6 +29,7 @@ namespace GraphicsTemplate::Graphics
     using KalaGraphics::Graphics::Mesh;
 
     using std::vector;
+    using std::filesystem::path;
 
     class LIB_API Render
     {
@@ -50,6 +52,8 @@ namespace GraphicsTemplate::Graphics
         static Texture* GetGroundTexture();
         static void SetGroundTexture(Texture* newValue);
 
+        static path GetLastImportedModel();
+
         static void ToggleVSync(
             GraphicsContext* gctx,
             Input* input);
@@ -61,7 +65,8 @@ namespace GraphicsTemplate::Graphics
             Camera* cam,
             f32 deltaTime);
 
-        static void ImportMeshes(
+        KNODISCARD
+        static path ImportMeshes(
             Input* input,
             Shader* shader);
 

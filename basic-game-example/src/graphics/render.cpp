@@ -95,6 +95,8 @@ static Mesh* vp1_Mesh2D_typeTest{};
 
 static Mesh* vp1_Mesh2D_typeTestBackground{};
 
+static path lastImportedModel{};
+
 namespace GraphicsTemplate::Graphics
 {
     bool Render::IsInitialized() { return isInitialized; }
@@ -304,10 +306,10 @@ namespace GraphicsTemplate::Graphics
     {
         if (!isInitialized) return;
 
-        Input* input = GraphicsTemplateCore::GetInput();
-        GraphicsContext* gctx = GraphicsTemplateCore::GetGraphicsContext();
-        Shader* primary3DShader = GraphicsTemplateCore::Get3DShader();
-        Camera* camera = GraphicsTemplateCore::GetCamera();
+        static Input* input = GraphicsTemplateCore::GetInput();
+        static GraphicsContext* gctx = GraphicsTemplateCore::GetGraphicsContext();
+        static Shader* primary3DShader = GraphicsTemplateCore::Get3DShader();
+        static Camera* camera = GraphicsTemplateCore::GetCamera();
 
         ToggleCamera(input);
 
@@ -316,7 +318,8 @@ namespace GraphicsTemplate::Graphics
             camera,
             EngineCore::GetDeltaTime());
 
-        ImportMeshes(input, primary3DShader);
+        path lastModel = ImportMeshes(input, primary3DShader);
+        if (!lastModel.empty()) lastImportedModel = lastModel;
 
         ToggleVSync(gctx, input);
 
@@ -365,6 +368,8 @@ namespace GraphicsTemplate::Graphics
 
     Texture* Render::GetGroundTexture() { return vp1_Tex_fallback_groundTest; }
     void Render::SetGroundTexture(Texture* newValue) { vp1_Tex_fallback_groundTest = newValue; }
+
+    path Render::GetLastImportedModel() { return lastImportedModel; }
 
     void Render::ToggleVSync(
         GraphicsContext* gctx,
@@ -477,10 +482,31 @@ namespace GraphicsTemplate::Graphics
             deltaTime);
     }
 
-    void Render::ImportMeshes(
+    path Render::ImportMeshes(
         Input* input,
         Shader* shader)
     {
+        if (!input)
+        {
+            Log::Print(
+                "Failed to import meshes because input is invalid!",
+                "GAME_RENDER",
+                LogType::LOG_WARNING,
+                2);
+
+            return {};
+        }
+        if (!shader)
+        {
+            Log::Print(
+                "Failed to import meshes because shader is invalid!",
+                "GAME_RENDER",
+                LogType::LOG_WARNING,
+                2);
+
+            return {};
+        }
+
         static vector<Mesh*> importedMeshes{};
 
         if (input->IsKeyPressed(KeyboardButton::K_SPACE))
@@ -496,10 +522,10 @@ namespace GraphicsTemplate::Graphics
             {
                 Log::Print(
                     "Failed to import glb/gltf file because none was selected!",
-                    "GAME_CORE",
+                    "GAME_RENDER",
                     LogType::LOG_WARNING);
 
-                return;
+                return "";
             }
             else
             {
@@ -508,11 +534,11 @@ namespace GraphicsTemplate::Graphics
                 {
                     Log::Print(
                         "Failed to import mesh from path '" + files.front().string() + "'!",
-                        "GAME_CORE",
+                        "GAME_RENDER",
                         LogType::LOG_ERROR,
                         2);
 
-                    return;
+                    return "";
                 }
                 else
                 {
@@ -601,9 +627,13 @@ namespace GraphicsTemplate::Graphics
                         "@@@@@\n"
                         "json data:\n" + Export::GetMeshJsonData(meshIDs));
                     */
+
+                    return files.front();
                 }
             }
         }
+
+        return {};
     }
 
     Texture* Render::CreateTexture(
