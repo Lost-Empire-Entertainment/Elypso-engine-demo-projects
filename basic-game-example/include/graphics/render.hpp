@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 #include <filesystem>
 
@@ -28,6 +29,7 @@ namespace GraphicsTemplate::Graphics
     using KalaGraphics::Graphics::MeshData;
     using KalaGraphics::Graphics::Mesh;
 
+    using std::string;
     using std::vector;
     using std::filesystem::path;
 
@@ -52,8 +54,6 @@ namespace GraphicsTemplate::Graphics
         static Texture* GetGroundTexture();
         static void SetGroundTexture(Texture* newValue);
 
-        static path GetLastImportedModel();
-
         static void ToggleVSync(
             GraphicsContext* gctx,
             Input* input);
@@ -65,10 +65,22 @@ namespace GraphicsTemplate::Graphics
             Camera* cam,
             f32 deltaTime);
 
+        static path GetLastImportedMeshPath();
+        static vector<Mesh*> GetLastImportedMeshPointers();
+
+        //Returns error string on failure, runs over time,
+        //currently triggered by space key
         KNODISCARD
-        static path ImportMeshes(
+        static string ImportMeshes(
             Input* input,
             Shader* shader);
+
+        //Returns error string on failure
+        //runs once, temporarily combined with ImportMeshes
+        KNODISCARD
+        static string ExportMeshes(
+            const path& targetPath,
+            const vector<Mesh*>& meshes);
 
         KNODISCARD
         static Texture* CreateTexture(

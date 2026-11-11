@@ -6,8 +6,11 @@
 #include "log_utils.hpp"
 #include "math_utils.hpp"
 #include "key_standards.hpp"
+#include "export_glb.hpp"
 
 #include "core/ee_core.hpp"
+#include "import/ee_import_data.hpp"
+#include "export/ee_export_data.hpp"
 #include "core/kw_core.hpp"
 #include "core/kw_input.hpp"
 #include "graphics/kw_window.hpp"
@@ -34,6 +37,7 @@ using KalaHeaders::KalaMath::epsilon;
 using KalaHeaders::KalaMath::vec2;
 using KalaHeaders::KalaMath::vec3;
 using KalaHeaders::KalaMath::vec4;
+using KalaHeaders::KalaMath::quat;
 using KalaHeaders::KalaMath::Transform2D;
 using KalaHeaders::KalaMath::Transform3D;
 using KalaHeaders::KalaMath::PosTarget;
@@ -42,7 +46,16 @@ using KalaHeaders::KalaMath::SizeTarget;
 
 using KalaHeaders::KalaKeyStandards::KeyboardButton;
 
+using KalaHeaders::KalaExportGLB::ExportMeshData;
+using KalaHeaders::KalaExportGLB::ExportGLBTextureData;
+using KalaHeaders::KalaExportGLB::ExportMaterialData;
+using KalaHeaders::KalaExportGLB::ExportNodeData;
+
 using ElypsoEngine::Core::EngineCore;
+using ElypsoEngine::Import::AssetData;
+using ElypsoEngine::Import::ImportData;
+using ElypsoEngine::Export::UserBlock;
+using ElypsoEngine::Export::ExportData;
 using KalaWindow::Core::KalaWindowCore;
 using KalaWindow::Core::Input;
 using KalaWindow::Graphics::FileType;
@@ -95,7 +108,8 @@ static Mesh* vp1_Mesh2D_typeTest{};
 
 static Mesh* vp1_Mesh2D_typeTestBackground{};
 
-static path lastImportedModel{};
+static path lastImportedMeshPath{};
+static vector<Mesh*> lastImportedMeshPtrs{};
 
 namespace GraphicsTemplate::Graphics
 {
@@ -139,7 +153,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to get fallback texture from shader '" + to_string(primary3DShader->GetID()) + "'! Reason: " + err);
         }
 
@@ -165,7 +179,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to initialize ground mesh because its material was invalid! Reason: " + err);
         }
 
@@ -208,7 +222,7 @@ namespace GraphicsTemplate::Graphics
         if (files.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to import font because no font was selected!");
         }
 
@@ -230,7 +244,7 @@ namespace GraphicsTemplate::Graphics
         if (!font)
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to import font '" + fontName.string() + "'!");
         }
 
@@ -257,7 +271,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to initialize text because its mesh '" 
                 + to_string(vp1_Text_typeTest->GetMeshID()) + "' was invalid! Reason: " + err);
         }
@@ -272,7 +286,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to initialize text because its mesh material '" 
                 + to_string(vp1_Mesh2D_typeTest->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
@@ -289,7 +303,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Metal Metropolis core error",
+                "Game render error",
                 "Failed to initialize text because its background mesh material '" 
                 + to_string(vp1_Mesh2D_typeTestBackground->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
@@ -318,8 +332,16 @@ namespace GraphicsTemplate::Graphics
             camera,
             EngineCore::GetDeltaTime());
 
-        path lastModel = ImportMeshes(input, primary3DShader);
-        if (!lastModel.empty()) lastImportedModel = lastModel;
+        string err = ImportMeshes(
+            input, 
+            primary3DShader);
+        if (!err.empty())
+        {
+            Log::Print(
+                "Failed to import meshes! Reason: " + err,
+                "GAME_RENDER",
+                LogType::LOG_WARNING);
+        }
 
         ToggleVSync(gctx, input);
 
@@ -368,8 +390,6 @@ namespace GraphicsTemplate::Graphics
 
     Texture* Render::GetGroundTexture() { return vp1_Tex_fallback_groundTest; }
     void Render::SetGroundTexture(Texture* newValue) { vp1_Tex_fallback_groundTest = newValue; }
-
-    path Render::GetLastImportedModel() { return lastImportedModel; }
 
     void Render::ToggleVSync(
         GraphicsContext* gctx,
@@ -482,32 +502,15 @@ namespace GraphicsTemplate::Graphics
             deltaTime);
     }
 
-    path Render::ImportMeshes(
+    path Render::GetLastImportedMeshPath() { return lastImportedMeshPath; }
+    vector<Mesh*> Render::GetLastImportedMeshPointers() { return lastImportedMeshPtrs; }
+
+    string Render::ImportMeshes(
         Input* input,
         Shader* shader)
     {
-        if (!input)
-        {
-            Log::Print(
-                "Failed to import meshes because input is invalid!",
-                "GAME_RENDER",
-                LogType::LOG_WARNING,
-                2);
-
-            return {};
-        }
-        if (!shader)
-        {
-            Log::Print(
-                "Failed to import meshes because shader is invalid!",
-                "GAME_RENDER",
-                LogType::LOG_WARNING,
-                2);
-
-            return {};
-        }
-
-        static vector<Mesh*> importedMeshes{};
+        if (!input) return "Input was invalid!";
+        if (!shader) return "Shader was invalid!";
 
         if (input->IsKeyPressed(KeyboardButton::K_SPACE))
         {
@@ -515,125 +518,292 @@ namespace GraphicsTemplate::Graphics
                 FileType::FILE_CUSTOM,
                 {
                     ".glb",
-                    ".gltf"
+                    ".gltf",
+                    ".edat"
                     });
 
-            if (files.empty())
-            {
-                Log::Print(
-                    "Failed to import glb/gltf file because none was selected!",
-                    "GAME_RENDER",
-                    LogType::LOG_WARNING);
+            if (files.empty()) return "No assets were selected!";
 
-                return "";
+            ImportMesh* importMesh{};
+
+            if (files.front().extension() == ".edat")
+            {
+                string err = ImportData::ImportAssetData(path(files.front()));
+                if (!err.empty()) return err;
+
+                vector<AssetData> assetData = ImportData::GetAssetData();
+                if (assetData.empty()) return "GetAssetData returned empty vector!";
+
+                vector<AssetData> streamedAssets{};
+                err = ImportData::StreamAssets(
+                    { assetData.front().assetName },
+                    streamedAssets);
+
+                if (!err.empty()) return err;
+
+                importMesh = ImportMesh::Initialize(std::move(streamedAssets.front().assetData));
             }
-            else
+            else importMesh = ImportMesh::Initialize(path(files.front()));
+
+            if (!importMesh) return "ImportMesh couldn't be initialized!";
+
+            vector<u32> meshIDs{};
+
+            if (!lastImportedMeshPtrs.empty())
             {
-                ImportMesh* importMesh = ImportMesh::Initialize(path(files.front()));
-                if (!importMesh)
-                {
-                    Log::Print(
-                        "Failed to import mesh from path '" + files.front().string() + "'!",
-                        "GAME_RENDER",
-                        LogType::LOG_ERROR,
-                        2);
+                for (Mesh* m : lastImportedMeshPtrs) m->Destroy();
+                lastImportedMeshPtrs.clear();
+            }
 
-                    return "";
-                }
-                else
+            for (const ImportNodeData& nodeData : importMesh->GetMeshData())
+            {
+                for (const ImportPrimitiveData& primitiveData : nodeData.primitiveData)
                 {
-                    vector<u32> meshIDs{};
+                    Mesh* primitive = Mesh::Initialize(shader->GetID());
 
-                    if (!importedMeshes.empty())
+                    if (!primitive)
                     {
-                        for (Mesh* m : importedMeshes) m->Destroy();
-                        importedMeshes.clear();
+                        KalaWindowCore::ForceClose(
+                            "Game render error",
+                            "Failed to import model '" + files.front().string() 
+                            + "' because one of its primitives failed to initialize!");
                     }
 
-                    for (const ImportNodeData& nodeData : importMesh->GetMeshData())
+                    Material* mat{};
+                    string err = Material::GetRegistry().GetContent(primitive->GetMaterialID(), mat);
+                    if (!err.empty())
                     {
-                        for (const ImportPrimitiveData& primitiveData : nodeData.primitiveData)
+                        KalaWindowCore::ForceClose(
+                            "Game render error",
+                            "Failed to initialize mesh because its material was invalid! Reason: " + err);
+                    }
+
+                    primitive->SetMeshData(
+                    {
+                        .vertices = vector<Vertex>(primitiveData.meshData.vertices),
+                        .indices = vector<u32>(primitiveData.meshData.indices)
+                    });
+
+                    Transform3D& mt = primitive->GetTransform();
+                    mt.setpos(nodeData.transform.getpos(PosTarget::POS_LOCAL));
+                    mt.setrotquat(nodeData.transform.getrotquat(RotTarget::ROT_LOCAL));
+                    mt.setsize(nodeData.transform.getsize(SizeTarget::SIZE_LOCAL));
+                    mt.update();
+
+                    primitive->FlipFaceDirection();
+
+                    const ImportMaterialData& matData = primitiveData.matData;
+
+                    mat->SetBaseColor(vec4(matData.baseColor));
+
+                    if (matData.alphaMode != AlphaMode::A_OPAQUE)
+                    {
+                        mat->SetAlphaMode(matData.alphaMode);
+
+                        if (matData.alphaMode == AlphaMode::A_MASK)
                         {
-                            Mesh* primitive = Mesh::Initialize(shader->GetID());
-
-                            if (!primitive)
-                            {
-                                KalaWindowCore::ForceClose(
-                                    "Metal Metropolis core error",
-                                    "Failed to import model '" + files.front().string() 
-                                    + "' because one of its primitives failed to initialize!");
-                            }
-
-                            Material* mat{};
-                            string err = Material::GetRegistry().GetContent(primitive->GetMaterialID(), mat);
-                            if (!err.empty())
-                            {
-                                KalaWindowCore::ForceClose(
-                                    "Game core error",
-                                    "Failed to initialize mesh because its material was invalid! Reason: " + err);
-                            }
-
-                            primitive->SetMeshData(
-                            {
-                                .vertices = vector<Vertex>(primitiveData.meshData.vertices),
-                                .indices = vector<u32>(primitiveData.meshData.indices)
-                            });
-
-                            Transform3D& mt = primitive->GetTransform();
-                            mt.setpos(nodeData.transform.getpos(PosTarget::POS_LOCAL));
-                            mt.setrotquat(nodeData.transform.getrotquat(RotTarget::ROT_LOCAL));
-                            mt.setsize(nodeData.transform.getsize(SizeTarget::SIZE_LOCAL));
-                            mt.update();
-
-                            primitive->FlipFaceDirection();
-
-                            const ImportMaterialData& matData = primitiveData.matData;
-
-                            mat->SetBaseColor(vec4(matData.baseColor));
-
-                            if (matData.alphaMode != AlphaMode::A_OPAQUE)
-                            {
-                                mat->SetAlphaMode(matData.alphaMode);
-
-                                if (matData.alphaMode == AlphaMode::A_MASK)
-                                {
-                                    mat->SetAlphaCutoff(matData.alphaCutoff);
-                                }
-                            }
-
-                            if (!matData.textureData.pixelData.empty())
-                            {
-                                Texture* meshTex = Texture::Initialize(shader->GetID());
-
-                                meshTex->SetPixelData(vector<u8>(matData.textureData.pixelData));
-                                meshTex->SetSize(matData.textureData.size);
-                                meshTex->SetPixelFormat(matData.textureData.pixelFormat);
-
-                                mat->SetBaseColorTextureID(meshTex->GetID());
-                            }
-
-                            importedMeshes.push_back(primitive);
-
-                            meshIDs.push_back(primitive->GetID());
+                            mat->SetAlphaCutoff(matData.alphaCutoff);
                         }
                     }
 
-                    /*
-                    Export::ExportMeshes(meshIDs, path(
-                        files.front().parent_path() 
-                        / (files.front().stem().string() + "_1.glb")));
+                    if (!matData.textureData.pixelData.empty())
+                    {
+                        Texture* meshTex = Texture::Initialize(shader->GetID());
 
-                    Log::Print(
-                        "@@@@@\n"
-                        "json data:\n" + Export::GetMeshJsonData(meshIDs));
-                    */
+                        meshTex->SetPixelData(vector<u8>(matData.textureData.pixelData));
+                        meshTex->SetSize(matData.textureData.size);
+                        meshTex->SetPixelFormat(matData.textureData.pixelFormat);
 
-                    return files.front();
+                        mat->SetBaseColorTextureID(meshTex->GetID());
+                    }
+
+                    lastImportedMeshPtrs.push_back(primitive);
+
+                    meshIDs.push_back(primitive->GetID());
                 }
+            }
+
+            if (files.front().extension() != ".edat")
+            {
+                lastImportedMeshPath = files.front();
+            }
+
+            static int exportIndex{};
+
+            //temporarily exporting meshes right after import succeeds
+            string err = ExportMeshes(
+                lastImportedMeshPath.parent_path() 
+                / string(lastImportedMeshPath.stem().string() + "_" + to_string(++exportIndex) + ".edat"),
+                lastImportedMeshPtrs);
+
+            if (!err.empty())
+            {
+                Log::Print(
+                    "Failed to export meshes! Reason: " + err,
+                    "GAME_RENDER",
+                    LogType::LOG_WARNING);
             }
         }
 
         return {};
+    }
+
+    string Render::ExportMeshes(
+        const path& targetPath,
+        const vector<Mesh*>& meshes)
+    {
+        if (exists(targetPath))
+        {
+            return "Failed to export meshes because target path already exists!";
+        }
+        if (!targetPath.has_extension()
+            || (targetPath.extension() != ".glb"
+            && targetPath.extension() != ".edat"))
+        {
+            return "Failed to export meshes because target path had invalid or no extension!";
+        }
+        if (meshes.empty())
+        {
+            return "Failed to export meshes because no meshes were selected!";
+        }
+
+        for (const Mesh* m : meshes)
+        {
+            if (!m) return "Failed to export meshes because one or more of the meshes were invalid!";
+        }
+
+        if (targetPath.extension() == ".glb")
+        {
+            vector<ExportNodeData> nodeData{};
+
+            u32 index{};
+            for (Mesh* m : meshes)
+            {
+                ExportNodeData node{};
+                node.nodeName = "model_" + to_string(index++);
+
+                const Transform3D& t = scast<Transform3D&>(m->GetTransform());
+                const vec3 pos = t.getpos(PosTarget::POS_LOCAL);
+                const quat rot = t.getrotquat(RotTarget::ROT_LOCAL);
+                const vec3 size = t.getsize(SizeTarget::SIZE_LOCAL);
+                node.transform = 
+                    {
+                        .position = { pos.x, pos.y, pos.z },
+                        .rotation = { rot.x, rot.y, rot.z, rot.w },
+                        .size = { size.x, size.y, size.z }
+                    };
+
+                const vector<Vertex>& vertices = m->GetVertices();
+                vector<u32> indices = m->GetIndices();
+
+                vector<KalaHeaders::KalaExportGLB::Vertex> exportVertices(vertices.size());
+                for (size_t i = 0; i < vertices.size(); i++)
+                {
+                    const Vertex& v = vertices[i];
+                    KalaHeaders::KalaExportGLB::Vertex& ev = exportVertices[i];
+
+                    ev.pos[0] = v.pos.x;
+                    ev.pos[1] = v.pos.y;
+                    ev.pos[2] = v.pos.z;
+
+                    ev.normal[0] = v.normal.x;
+                    ev.normal[1] = v.normal.y;
+                    ev.normal[2] = v.normal.z;
+
+                    ev.uv[0] = v.uv.x;
+                    ev.uv[1] = v.uv.y;
+
+                    ev.color[0] = v.color.x;
+                    ev.color[1] = v.color.y;
+                    ev.color[2] = v.color.z;
+                    ev.color[3] = v.color.w;
+                }
+
+                node.meshData.vertices = std::move(exportVertices);
+                node.meshData.indices = std::move(indices);
+
+                Material* mat{};
+                string err = Material::GetRegistry().GetContent(m->GetMaterialID(), mat);
+                if (!err.empty())
+                {
+                    KalaWindowCore::ForceClose(
+                        "Game render error",
+                        "Failed to get mesh '" + to_string(m->GetID()) 
+                        + "' material because it was invalid! Reason: " + err);
+                }
+
+                Texture* tex{};
+                err = Texture::GetRegistry().GetContent(mat->GetBaseColorTextureID(), tex);
+                if (!err.empty())
+                {
+                    KalaWindowCore::ForceClose(
+                        "Game render error",
+                        "Failed to get mesh '" + to_string(m->GetID()) 
+                        + "' base color texture because it was invalid! Reason: " + err);
+                }
+
+                const vec4& baseColor = mat->GetBaseColor();
+                node.matData.baseColor[0] = baseColor.x;
+                node.matData.baseColor[1] = baseColor.y;
+                node.matData.baseColor[2] = baseColor.z;
+                node.matData.baseColor[3] = baseColor.w;
+
+                node.matData.alphaMode = scast<KalaHeaders::KalaExportGLB::AlphaMode>(scast<u8>(mat->GetAlphaMode()));
+                node.matData.alphaCutoff = mat->GetAlphaCutoff();
+
+                node.matData.textureData.pngImageData = tex->GetPixelData();
+
+                nodeData.push_back(std::move(node));
+            }
+
+            string err = KalaHeaders::KalaExportGLB::ExportMeshes(
+                std::move(nodeData),
+                targetPath);
+            if (!err.empty()) return err;
+        }
+        else
+        {
+            path outPath{};
+            size_t relevantMeshCount{};
+
+            for (const Mesh* m : meshes)
+            {
+                for (const Mesh* lastMesh : lastImportedMeshPtrs)
+                {
+                    if (m->GetID() == lastMesh->GetID())
+                    {
+                        outPath = lastImportedMeshPath;
+                        relevantMeshCount++;
+                        break;
+                    }
+                }
+            }
+
+            if (outPath.empty())
+            {
+                return 
+                    "Failed to export meshes because none of the given "
+                    "meshes matched the last imported meshes "
+                    "so their original mesh path could not be assigned!";
+            }
+            if (relevantMeshCount != meshes.size())
+            {
+                return 
+                    "Failed to export meshes because one of the meshes "
+                    "did not match any of the last imported meshes "
+                    "so their original mesh path could not be assigned!";
+            }
+
+            string err = ExportData::ExportAssetData(
+                targetPath,
+                {{ 
+                    .blockName = "mesh_" + lastImportedMeshPath.stem().string(),
+                    .blockPath = lastImportedMeshPath
+                }});
+            if (!err.empty()) return err;
+        }
+
+        return "";
     }
 
     Texture* Render::CreateTexture(
@@ -649,7 +819,7 @@ namespace GraphicsTemplate::Graphics
         if (!texture)
         {
             KalaWindowCore::ForceClose(
-                "Game core error",
+                "Game render error",
                 "Failed to initialize test texture!");
         }
 
@@ -667,7 +837,7 @@ namespace GraphicsTemplate::Graphics
         if (!mesh)
         {
             KalaWindowCore::ForceClose(
-                "Game core error",
+                "Game render error",
                 "Failed to initialize test mesh!");
         }
 
@@ -676,7 +846,7 @@ namespace GraphicsTemplate::Graphics
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
-                "Game core error",
+                "Game render error",
                 "Failed to initialize test mesh because its material was invalid! Reason: " + err);
         }
 
