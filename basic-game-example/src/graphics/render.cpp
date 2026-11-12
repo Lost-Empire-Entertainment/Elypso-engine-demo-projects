@@ -54,7 +54,6 @@ using KalaHeaders::KalaExportGLB::ExportNodeData;
 using ElypsoEngine::Core::EngineCore;
 using ElypsoEngine::Import::AssetData;
 using ElypsoEngine::Import::ImportData;
-using ElypsoEngine::Export::UserBlock;
 using ElypsoEngine::Export::ExportData;
 using KalaWindow::Core::KalaWindowCore;
 using KalaWindow::Core::Input;
@@ -553,6 +552,9 @@ namespace GraphicsTemplate::Graphics
             {
                 for (Mesh* m : lastImportedMeshPtrs) m->Destroy();
                 lastImportedMeshPtrs.clear();
+
+                //make sure latest model has latest content
+                ImportData::ClearImportedData();
             }
 
             for (const ImportNodeData& nodeData : importMesh->GetMeshData())
