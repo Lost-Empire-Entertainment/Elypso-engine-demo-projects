@@ -9,8 +9,6 @@
 #include <array>
 #include <filesystem>
 
-#include "core_utils.hpp"
-
 #include "core/kw_input.hpp"
 #include "graphics/kg_context.hpp"
 #include "graphics/kg_viewport.hpp"
