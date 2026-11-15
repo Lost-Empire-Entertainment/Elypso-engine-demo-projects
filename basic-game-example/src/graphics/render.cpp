@@ -120,7 +120,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to initialize renderer because core has not yet been initialized!",
                 "BGE_RENDER",
-                LogType::LOG_WARNING);
+                LogType::WARNING);
 
             return;
         }
@@ -129,7 +129,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to initialize renderer because it has already been initialized!",
                 "BGE_RENDER",
-                LogType::LOG_WARNING);
+                LogType::WARNING);
 
             return;
         }
@@ -160,8 +160,8 @@ namespace GraphicsTemplate::Graphics
             primary3DShader,
             {
                 .pixelData = vector<u8>(fallbackTex->GetPixelData()),
-                .filterMode = TextureFilterMode::FILTER_NEAREST,
-                .wrapMode = TextureWrapMode::WRAP_REPEAT,
+                .filterMode = TextureFilterMode::NEAREST,
+                .wrapMode = TextureWrapMode::REPEAT,
                 .size = 16
             });
 
@@ -277,8 +277,8 @@ namespace GraphicsTemplate::Graphics
 
         vp1_Mesh2D_typeTest->SetIgnoreHoverState(false);
 
-        vp1_Mesh2D_typeTest->SetViewportAnchorPosition(AnchorPosition::P_TOP_LEFT);
-        vp1_Mesh2D_typeTest->SetSelfAnchorPosition(AnchorPosition::P_TOP_LEFT);
+        vp1_Mesh2D_typeTest->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_typeTest->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
 
         Material* typeTestMeshMat{};
         err = Material::GetRegistry().GetContent(vp1_Mesh2D_typeTest->GetMaterialID(), typeTestMeshMat);
@@ -290,12 +290,12 @@ namespace GraphicsTemplate::Graphics
                 + to_string(vp1_Mesh2D_typeTest->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
         typeTestMeshMat->SetBaseColor( vec4{0.0f, 0.0f, 0.0f, 1.0f} );
-        typeTestMeshMat->SetAlphaMode(AlphaMode::A_BLEND);
+        typeTestMeshMat->SetAlphaMode(AlphaMode::BLEND);
 
         vp1_Mesh2D_typeTestBackground = Mesh::Initialize(primary2DShader->GetID());
 
-        vp1_Mesh2D_typeTestBackground->SetViewportAnchorPosition(AnchorPosition::P_TOP_LEFT);
-        vp1_Mesh2D_typeTestBackground->SetSelfAnchorPosition(AnchorPosition::P_TOP_LEFT);
+        vp1_Mesh2D_typeTestBackground->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_typeTestBackground->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
 
         Material* typeTestBackgroundMat{};
         err = Material::GetRegistry().GetContent(vp1_Mesh2D_typeTestBackground->GetMaterialID(), typeTestBackgroundMat);
@@ -307,7 +307,7 @@ namespace GraphicsTemplate::Graphics
                 + to_string(vp1_Mesh2D_typeTestBackground->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
         typeTestBackgroundMat->SetBaseColor( vec4{0.5f, 0.5f, 0.8f, 0.3f} );
-        typeTestBackgroundMat->SetAlphaMode(AlphaMode::A_BLEND);
+        typeTestBackgroundMat->SetAlphaMode(AlphaMode::BLEND);
 
         //sync after kg objects are done with initialization
         EngineCore::SyncID();
@@ -339,7 +339,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to import meshes! Reason: " + err,
                 "GAME_RENDER",
-                LogType::LOG_WARNING);
+                LogType::WARNING);
         }
 
         ToggleVSync(gctx, input);
@@ -362,8 +362,8 @@ namespace GraphicsTemplate::Graphics
         Transform2D& typeTestTransform = scast<Transform2D&>(vp1_Mesh2D_typeTest->GetTransform());
         Transform2D& typeTestBackgroundTransform = scast<Transform2D&>(vp1_Mesh2D_typeTestBackground->GetTransform());
 
-        const vec2 textSize = typeTestTransform.getsize(SizeTarget::SIZE_LOCAL);
-        const vec2 textBackgroundSize = typeTestBackgroundTransform.getsize(SizeTarget::SIZE_LOCAL);
+        const vec2 textSize = typeTestTransform.getsize(SizeTarget::LOCAL);
+        const vec2 textBackgroundSize = typeTestBackgroundTransform.getsize(SizeTarget::LOCAL);
 
         if (textBackgroundSize != textSize)
         {
@@ -398,19 +398,19 @@ namespace GraphicsTemplate::Graphics
         if (input->IsKeyPressed(KeyboardButton::K_1))
         {
             Log::Print("@@@@@ set vsync state to off");
-            gctx->SetVSyncState(VSyncState::VSYNC_OFF);
+            gctx->SetVSyncState(VSyncState::OFF);
         }
         //else if (input->IsComboPressed(combo_vsync_adaptive))
         else if (input->IsKeyPressed(KeyboardButton::K_2))
         {
             Log::Print("@@@@@ set vsync state to adaptive");
-            gctx->SetVSyncState(VSyncState::VSYNC_ON_ADAPTIVE);
+            gctx->SetVSyncState(VSyncState::ADAPTIVE);
         }
         //else if (input->IsComboPressed(combo_vsync_triple_buffered))
         if (input->IsKeyPressed(KeyboardButton::K_3))
         {
             Log::Print("@@@@@ set vsync state to triple buffered");
-            gctx->SetVSyncState(VSyncState::VSYNC_ON_TRIPLE_BUFFERED);
+            gctx->SetVSyncState(VSyncState::TRIPLE_BUFFERED);
         }
     }
 
@@ -491,7 +491,7 @@ namespace GraphicsTemplate::Graphics
         Log::Print(
             moveStr + transformStr,
             "GAME_CAM_MOVE_TEST",
-            LogType::LOG_VERBOSE);
+            LogType::VERBOSE);
         */
 
         cam->Move(
@@ -514,7 +514,7 @@ namespace GraphicsTemplate::Graphics
         if (input->IsKeyPressed(KeyboardButton::K_SPACE))
         {
             vector<path> files = Window_Global::GetFiles(
-                FileType::FILE_CUSTOM,
+                FileType::CUSTOM,
                 {
                     ".glb",
                     ".gltf",
@@ -587,9 +587,9 @@ namespace GraphicsTemplate::Graphics
                     });
 
                     Transform3D& mt = primitive->GetTransform();
-                    mt.setpos(nodeData.transform.getpos(PosTarget::POS_LOCAL));
-                    mt.setrotquat(nodeData.transform.getrotquat(RotTarget::ROT_LOCAL));
-                    mt.setsize(nodeData.transform.getsize(SizeTarget::SIZE_LOCAL));
+                    mt.setpos(nodeData.transform.getpos(PosTarget::LOCAL));
+                    mt.setrotquat(nodeData.transform.getrotquat(RotTarget::LOCAL));
+                    mt.setsize(nodeData.transform.getsize(SizeTarget::LOCAL));
                     mt.update();
 
                     primitive->FlipFaceDirection();
@@ -598,11 +598,11 @@ namespace GraphicsTemplate::Graphics
 
                     mat->SetBaseColor(vec4(matData.baseColor));
 
-                    if (matData.alphaMode != AlphaMode::A_OPAQUE)
+                    if (matData.alphaMode != AlphaMode::OPAQUE)
                     {
                         mat->SetAlphaMode(matData.alphaMode);
 
-                        if (matData.alphaMode == AlphaMode::A_MASK)
+                        if (matData.alphaMode == AlphaMode::MASK)
                         {
                             mat->SetAlphaCutoff(matData.alphaCutoff);
                         }
@@ -643,7 +643,7 @@ namespace GraphicsTemplate::Graphics
                 Log::Print(
                     "Failed to export meshes! Reason: " + err,
                     "GAME_RENDER",
-                    LogType::LOG_WARNING);
+                    LogType::WARNING);
             }
         }
 
@@ -685,9 +685,9 @@ namespace GraphicsTemplate::Graphics
                 node.nodeName = "model_" + to_string(index++);
 
                 const Transform3D& t = scast<Transform3D&>(m->GetTransform());
-                const vec3 pos = t.getpos(PosTarget::POS_LOCAL);
-                const quat rot = t.getrotquat(RotTarget::ROT_LOCAL);
-                const vec3 size = t.getsize(SizeTarget::SIZE_LOCAL);
+                const vec3 pos = t.getpos(PosTarget::LOCAL);
+                const quat rot = t.getrotquat(RotTarget::LOCAL);
+                const vec3 size = t.getsize(SizeTarget::LOCAL);
                 node.transform = 
                     {
                         .position = { pos.x, pos.y, pos.z },

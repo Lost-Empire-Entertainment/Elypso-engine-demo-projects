@@ -81,7 +81,7 @@ namespace GraphicsTemplate::Core
             Log::Print(
                 "Failed to initialize core because it has already been initialized!",
                 "BGE_CORE",
-                LogType::LOG_WARNING);
+                LogType::WARNING);
 
             return;
         }
@@ -127,7 +127,7 @@ namespace GraphicsTemplate::Core
                 "Metal Metropolis core error",
                 "Failed to get root viewport from graphics context '" + to_string(ew1_gctx->GetID()) + "'! Reason: " + err);
         }
-        ew1_gctx_vp1->SetType(ViewportType::VP_FIT);
+        ew1_gctx_vp1->SetType(ViewportType::FIT);
 
         err = Shader::GetRegistry().GetContent(ew1_gctx_vp1->GetShader3DIDs().front(), vp1_Shader3D_primary);
         if (!err.empty())
