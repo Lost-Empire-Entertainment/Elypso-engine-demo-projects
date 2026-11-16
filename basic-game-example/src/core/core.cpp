@@ -81,7 +81,7 @@ namespace GraphicsTemplate::Core
             Log::Print(
                 "Failed to initialize core because it has already been initialized!",
                 "BGE_CORE",
-                LogType::WARNING);
+                LogType::LOG_WARNING);
 
             return;
         }

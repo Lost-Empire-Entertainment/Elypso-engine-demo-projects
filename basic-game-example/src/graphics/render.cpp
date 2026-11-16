@@ -120,7 +120,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to initialize renderer because core has not yet been initialized!",
                 "BGE_RENDER",
-                LogType::WARNING);
+                LogType::LOG_WARNING);
 
             return;
         }
@@ -129,7 +129,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to initialize renderer because it has already been initialized!",
                 "BGE_RENDER",
-                LogType::WARNING);
+                LogType::LOG_WARNING);
 
             return;
         }
@@ -290,7 +290,7 @@ namespace GraphicsTemplate::Graphics
                 + to_string(vp1_Mesh2D_typeTest->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
         typeTestMeshMat->SetBaseColor( vec4{0.0f, 0.0f, 0.0f, 1.0f} );
-        typeTestMeshMat->SetAlphaMode(AlphaMode::BLEND);
+        typeTestMeshMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
 
         vp1_Mesh2D_typeTestBackground = Mesh::Initialize(primary2DShader->GetID());
 
@@ -307,7 +307,7 @@ namespace GraphicsTemplate::Graphics
                 + to_string(vp1_Mesh2D_typeTestBackground->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
         typeTestBackgroundMat->SetBaseColor( vec4{0.5f, 0.5f, 0.8f, 0.3f} );
-        typeTestBackgroundMat->SetAlphaMode(AlphaMode::BLEND);
+        typeTestBackgroundMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
 
         //sync after kg objects are done with initialization
         EngineCore::SyncID();
@@ -339,7 +339,7 @@ namespace GraphicsTemplate::Graphics
             Log::Print(
                 "Failed to import meshes! Reason: " + err,
                 "GAME_RENDER",
-                LogType::WARNING);
+                LogType::LOG_WARNING);
         }
 
         ToggleVSync(gctx, input);
@@ -491,7 +491,7 @@ namespace GraphicsTemplate::Graphics
         Log::Print(
             moveStr + transformStr,
             "GAME_CAM_MOVE_TEST",
-            LogType::VERBOSE);
+            LogType::LOG_VERBOSE);
         */
 
         cam->Move(
@@ -598,11 +598,11 @@ namespace GraphicsTemplate::Graphics
 
                     mat->SetBaseColor(vec4(matData.baseColor));
 
-                    if (matData.alphaMode != AlphaMode::OPAQUE)
+                    if (matData.alphaMode != AlphaMode::TYPE_OPAQUE)
                     {
                         mat->SetAlphaMode(matData.alphaMode);
 
-                        if (matData.alphaMode == AlphaMode::MASK)
+                        if (matData.alphaMode == AlphaMode::TYPE_MASK)
                         {
                             mat->SetAlphaCutoff(matData.alphaCutoff);
                         }
@@ -643,7 +643,7 @@ namespace GraphicsTemplate::Graphics
                 Log::Print(
                     "Failed to export meshes! Reason: " + err,
                     "GAME_RENDER",
-                    LogType::WARNING);
+                    LogType::LOG_WARNING);
             }
         }
 
