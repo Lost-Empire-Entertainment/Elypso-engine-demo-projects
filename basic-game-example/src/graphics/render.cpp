@@ -142,6 +142,9 @@ namespace GraphicsTemplate::Graphics
         Viewport* viewport = GraphicsTemplateCore::GetViewport();
         Shader* primary3DShader = GraphicsTemplateCore::Get3DShader();
         Shader* primary2DShader = GraphicsTemplateCore::Get2DShader();
+        Material* unlitMat = GraphicsTemplateCore::GetUnlitMaterial();
+        Material* rectMat = GraphicsTemplateCore::GetRectMaterial();
+        Material* fontMat = GraphicsTemplateCore::GetFontMaterial();
 
         //
         // CREATE TEXTURES
@@ -170,7 +173,7 @@ namespace GraphicsTemplate::Graphics
         //
 
         vp1_Mesh3D_groundTest = CreateMesh(
-            primary3DShader,
+            unlitMat,
             Mesh::GenerateMeshData(Mesh_Cube{.edgeCount = 4}));
 
         Material* groundMeshMat{};
@@ -229,6 +232,13 @@ namespace GraphicsTemplate::Graphics
         font = ImportFont::Initialize(
             path(files.front()),
             64);
+
+        if (!font)
+        {
+            KalaWindowCore::ForceClose(
+                "Game render error",
+                "Failed to create font!");
+        }
         */
 
         //initialize from known font path
@@ -239,6 +249,13 @@ namespace GraphicsTemplate::Graphics
         font = ImportFont::Initialize(
             path(fontPath),
             32);
+
+        if (!font)
+        {
+            KalaWindowCore::ForceClose(
+                "Game render error",
+                "Failed to create font!");
+        }
 
         if (!font)
         {
@@ -262,6 +279,13 @@ namespace GraphicsTemplate::Graphics
         vp1_Text_typeTest = Text::Initialize(
             font->GetID(),
             viewport->GetID());
+
+        if (!vp1_Text_typeTest)
+        {
+            KalaWindowCore::ForceClose(
+                "Game render error",
+                "Failed to create type test text!");
+        }
         
         //vp1_Text_typeTest->SetEditState(true);
         vp1_Text_typeTest->SetMaxCharacters(50);
@@ -292,7 +316,14 @@ namespace GraphicsTemplate::Graphics
         typeTestMeshMat->SetBaseColor( vec4{0.0f, 0.0f, 0.0f, 1.0f} );
         typeTestMeshMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
 
-        vp1_Mesh2D_typeTestBackground = Mesh::Initialize(primary2DShader->GetID());
+        vp1_Mesh2D_typeTestBackground = Mesh::Initialize(rectMat->GetID());
+
+        if (!vp1_Mesh2D_typeTestBackground)
+        {
+            KalaWindowCore::ForceClose(
+                "Game render error",
+                "Failed to create type test text background!");
+        }
 
         vp1_Mesh2D_typeTestBackground->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
         vp1_Mesh2D_typeTestBackground->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
@@ -322,6 +353,7 @@ namespace GraphicsTemplate::Graphics
         static Input* input = GraphicsTemplateCore::GetInput();
         static GraphicsContext* gctx = GraphicsTemplateCore::GetGraphicsContext();
         static Shader* primary3DShader = GraphicsTemplateCore::Get3DShader();
+        static Material* unlitMat = GraphicsTemplateCore::GetUnlitMaterial();
         static Camera* camera = GraphicsTemplateCore::GetCamera();
 
         ToggleCamera(input);
@@ -333,7 +365,7 @@ namespace GraphicsTemplate::Graphics
 
         string err = ImportMeshes(
             input, 
-            primary3DShader);
+            unlitMat);
         if (!err.empty())
         {
             Log::Print(
@@ -506,10 +538,10 @@ namespace GraphicsTemplate::Graphics
 
     string Render::ImportMeshes(
         Input* input,
-        Shader* shader)
+        Material* material)
     {
         if (!input) return "Input was invalid!";
-        if (!shader) return "Shader was invalid!";
+        if (!material) return "Material was invalid!";
 
         if (input->IsKeyPressed(KeyboardButton::K_SPACE))
         {
@@ -561,7 +593,7 @@ namespace GraphicsTemplate::Graphics
             {
                 for (const ImportPrimitiveData& primitiveData : nodeData.primitiveData)
                 {
-                    Mesh* primitive = Mesh::Initialize(shader->GetID());
+                    Mesh* primitive = Mesh::Initialize(material->GetID());
 
                     if (!primitive)
                     {
@@ -610,7 +642,23 @@ namespace GraphicsTemplate::Graphics
 
                     if (!matData.textureData.pixelData.empty())
                     {
-                        Texture* meshTex = Texture::Initialize(shader->GetID());
+                        Shader* matShader{};
+                        string err = Shader::GetRegistry().GetContent(mat->GetShaderID(), matShader);
+                        if (!err.empty())
+                        {
+                            KalaWindowCore::ForceClose(
+                                "Game render error",
+                                "Failed to import meshes because material '" 
+                                + to_string(material->GetID()) + "' shader was invalid! Reason: " + err);
+                        }
+
+                        Texture* meshTex = Texture::Initialize(matShader->GetID());
+                        if (!meshTex)
+                        {
+                            KalaWindowCore::ForceClose(
+                                "Game render error",
+                                "Failed to create mesh texture!");
+                        }
 
                         meshTex->SetPixelData(vector<u8>(matData.textureData.pixelData));
                         meshTex->SetSize(matData.textureData.size);
@@ -818,38 +866,31 @@ namespace GraphicsTemplate::Graphics
         Texture* texture = Texture::Initialize(
             shader->GetID(),
             std::move(textureData));
+
         if (!texture)
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
-                "Failed to initialize test texture!");
+                "Failed to create texture!");
         }
 
         return texture;
     }
 
     Mesh* Render::CreateMesh(
-        Shader* shader,
+        Material* mat,
         MeshData&& meshData)
     {
         //sync ids before generating mesh
         EngineCore::SyncID();
 
-        Mesh* mesh = Mesh::Initialize(shader->GetID());
+        Mesh* mesh = Mesh::Initialize(mat->GetID());
+
         if (!mesh)
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
-                "Failed to initialize test mesh!");
-        }
-
-        Material* mat{};
-        string err = Material::GetRegistry().GetContent(mesh->GetMaterialID(), mat);
-        if (!err.empty())
-        {
-            KalaWindowCore::ForceClose(
-                "Game render error",
-                "Failed to initialize test mesh because its material was invalid! Reason: " + err);
+                "Failed to create mesh!");
         }
 
         if (!mesh->Is2D()) mesh->SetMeshData(std::move(meshData));

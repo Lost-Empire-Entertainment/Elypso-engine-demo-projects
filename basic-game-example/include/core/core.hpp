@@ -13,6 +13,7 @@
 #include "graphics/kg_context.hpp"
 #include "graphics/kg_viewport.hpp"
 #include "graphics/kg_shader.hpp"
+#include "graphics/kg_material.hpp"
 #include "graphics/kg_camera.hpp"
 
 namespace GraphicsTemplate::Core
@@ -21,6 +22,7 @@ namespace GraphicsTemplate::Core
     using KalaGraphics::Graphics::GraphicsContext;
     using KalaGraphics::Graphics::Viewport;
     using KalaGraphics::Graphics::Shader;
+    using KalaGraphics::Graphics::Material;
     using KalaGraphics::Graphics::Camera;
 
     using std::string;
@@ -45,6 +47,12 @@ namespace GraphicsTemplate::Core
         static Shader* Get3DShader();
         KNODISCARD
         static Shader* Get2DShader();
+        KNODISCARD
+        static Material* GetUnlitMaterial();
+        KNODISCARD
+        static Material* GetRectMaterial();
+        KNODISCARD
+        static Material* GetFontMaterial();
         KNODISCARD
         static Camera* GetCamera();
 

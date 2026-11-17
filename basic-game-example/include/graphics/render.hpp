@@ -14,6 +14,7 @@
 #include "graphics/kg_shader.hpp"
 #include "graphics/kg_camera.hpp"
 #include "graphics/kg_texture.hpp"
+#include "graphics/kg_material.hpp"
 #include "graphics/kg_mesh.hpp"
 
 namespace GraphicsTemplate::Graphics
@@ -24,6 +25,7 @@ namespace GraphicsTemplate::Graphics
     using KalaGraphics::Graphics::Camera;
     using KalaGraphics::Graphics::TextureData;
     using KalaGraphics::Graphics::Texture;
+    using KalaGraphics::Graphics::Material;
     using KalaGraphics::Graphics::MeshData;
     using KalaGraphics::Graphics::Mesh;
 
@@ -71,7 +73,7 @@ namespace GraphicsTemplate::Graphics
         KNODISCARD
         static string ImportMeshes(
             Input* input,
-            Shader* shader);
+            Material* material);
 
         //Returns error string on failure
         //runs once, temporarily combined with ImportMeshes
@@ -87,7 +89,7 @@ namespace GraphicsTemplate::Graphics
 
         KNODISCARD
         static Mesh* CreateMesh(
-            Shader* shader,
+            Material* mat,
             MeshData&& meshData);
     };
 }

@@ -39,9 +39,11 @@ using KalaWindow::Core::Input;
 using KalaWindow::Graphics::ProcessWindow;
 using KalaGraphics::Graphics::GraphicsContext;
 using KalaGraphics::Graphics::HitTest;
+using KalaGraphics::Graphics::RootShaderTarget;
 using KalaGraphics::Graphics::ViewportType;
 using KalaGraphics::Graphics::Viewport;
 using KalaGraphics::Graphics::Shader;
+using KalaGraphics::Graphics::Material;
 using KalaGraphics::Graphics::Camera;
 using KalaGraphics::Graphics::Texture;
 
@@ -67,6 +69,10 @@ static Input* ew1_pw_input{};
 
 static Shader* vp1_Shader3D_primary{};
 static Shader* vp1_Shader2D_primary{};
+
+static Material* vp1_Material_unlit{};
+static Material* vp1_Material_rect{};
+static Material* vp1_Material_font{};
 
 static Camera* vp1_Cam3D_primary{};
 static Camera* vp1_Cam2D_primary{};
@@ -145,6 +151,33 @@ namespace GraphicsTemplate::Core
                 "Failed to get primary 2D shader from viewport '" + to_string(ew1_gctx_vp1->GetID()) + "'! Reason: " + err);
         }
 
+        u32 unlitMatID = ew1_gctx_vp1->GetRootMaterialID(RootShaderTarget::UNLIT);
+        err = Material::GetRegistry().GetContent(unlitMatID, vp1_Material_unlit);
+        if (!err.empty())
+        {
+            KalaWindowCore::ForceClose(
+                "Metal Metropolis core error",
+                "Failed to get unlit material from viewport '" + to_string(ew1_gctx_vp1->GetID()) + "'! Reason: " + err);
+        }
+
+        u32 rectMatID = ew1_gctx_vp1->GetRootMaterialID(RootShaderTarget::RECT);
+        err = Material::GetRegistry().GetContent(rectMatID, vp1_Material_rect);
+        if (!err.empty())
+        {
+            KalaWindowCore::ForceClose(
+                "Metal Metropolis core error",
+                "Failed to get rect material from viewport '" + to_string(ew1_gctx_vp1->GetID()) + "'! Reason: " + err);
+        }
+
+        u32 fontMatID = ew1_gctx_vp1->GetRootMaterialID(RootShaderTarget::FONT);
+        err = Material::GetRegistry().GetContent(fontMatID, vp1_Material_font);
+        if (!err.empty())
+        {
+            KalaWindowCore::ForceClose(
+                "Metal Metropolis core error",
+                "Failed to get font material from viewport '" + to_string(ew1_gctx_vp1->GetID()) + "'! Reason: " + err);
+        }
+
         Texture* rootTex{};
         err = Texture::GetRegistry().GetContent(vp1_Shader3D_primary->GetRootTextureID(), rootTex);
         if (!err.empty())
@@ -202,6 +235,9 @@ namespace GraphicsTemplate::Core
     Viewport* GraphicsTemplateCore::GetViewport() { return ew1_gctx_vp1; }
     Shader* GraphicsTemplateCore::Get3DShader() { return vp1_Shader3D_primary; }
     Shader* GraphicsTemplateCore::Get2DShader() { return vp1_Shader2D_primary; }
+    Material* GraphicsTemplateCore::GetUnlitMaterial() { return vp1_Material_unlit; }
+    Material* GraphicsTemplateCore::GetRectMaterial() { return vp1_Material_rect; }
+    Material* GraphicsTemplateCore::GetFontMaterial() { return vp1_Material_font; }
     Camera* GraphicsTemplateCore::GetCamera() { return vp1_Cam3D_primary; }
 
     array<string, 4> GraphicsTemplateCore::GetFPS(f64 secondsToWait)
