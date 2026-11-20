@@ -57,6 +57,6 @@ namespace GraphicsTemplate::Core
         static Camera* GetCamera();
 
         KNODISCARD
-        static array<string, 4> GetFPS(f64 secondsToWait);
+        static array<string, 4> GetFPS();
     };
 }

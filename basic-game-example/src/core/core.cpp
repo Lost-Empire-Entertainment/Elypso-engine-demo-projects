@@ -240,7 +240,7 @@ namespace GraphicsTemplate::Core
     Material* GraphicsTemplateCore::GetFontMaterial() { return vp1_Material_font; }
     Camera* GraphicsTemplateCore::GetCamera() { return vp1_Cam3D_primary; }
 
-    array<string, 4> GraphicsTemplateCore::GetFPS(f64 secondsToWait)
+    array<string, 4> GraphicsTemplateCore::GetFPS()
     {
         static f64 cachedFPS = EngineCore::GetAverageFPS();
         static f64 cachedFrameLength = EngineCore::GetAverageFrameLength();
@@ -249,7 +249,7 @@ namespace GraphicsTemplate::Core
 
         static time_point start = steady_clock::now();
 
-        if (steady_clock::now() - start > duration<f64>(secondsToWait))
+        if (steady_clock::now() - start > duration<f64>(EngineCore::GetFramerateTimeInterval()))
         {
             cachedFPS = EngineCore::GetAverageFPS();
             cachedFrameLength = EngineCore::GetAverageFrameLength();

@@ -100,6 +100,7 @@ static Texture* vp1_Tex_fallback{};
 static Texture* vp1_Tex_fallback_groundTest{};
 
 static vector<Mesh*> vp1_Mesh3D_importedMeshes{};
+static Material* vp1_Material_groundText{};
 static Mesh* vp1_Mesh3D_groundTest{};
 
 static Text* vp1_Text_typeTest{};
@@ -172,20 +173,12 @@ namespace GraphicsTemplate::Graphics
         // CREATE GROUND
         //
 
+        vp1_Material_groundText = Material::Initialize(primary3DShader->GetID());
         vp1_Mesh3D_groundTest = CreateMesh(
-            unlitMat,
+            vp1_Material_groundText,
             Mesh::GenerateMeshData(Mesh_Cube{.edgeCount = 4}));
 
-        Material* groundMeshMat{};
-        err = Material::GetRegistry().GetContent(vp1_Mesh3D_groundTest->GetMaterialID(), groundMeshMat);
-        if (!err.empty())
-        {
-            KalaWindowCore::ForceClose(
-                "Game render error",
-                "Failed to initialize ground mesh because its material was invalid! Reason: " + err);
-        }
-
-        groundMeshMat->SetBaseColorTextureID(vp1_Tex_fallback_groundTest->GetID());
+        vp1_Material_groundText->SetBaseColorTextureID(vp1_Tex_fallback_groundTest->GetID());
 
         vector<Vertex> vertices = vp1_Mesh3D_groundTest->GetVertices();
         vector<u32> indices = vp1_Mesh3D_groundTest->GetIndices();
@@ -377,7 +370,7 @@ namespace GraphicsTemplate::Graphics
         ToggleVSync(gctx, input);
 
         static string lastFPS{};
-        string fps = GraphicsTemplateCore::GetFPS(0.5f)[0];
+        string fps = GraphicsTemplateCore::GetFPS()[0];
 
         if (lastFPS != ""
             && fps == "")

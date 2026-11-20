@@ -29,6 +29,8 @@ extern const AppConfig ElypsoEngine::Core::appConfig =
 
 void ElypsoEngine::Core::Init()
 {
+    EngineCore::SetFramerateTimeInterval(1.0f);
+
     //print all user system info for now always at the very top
 
     Log::Print(
