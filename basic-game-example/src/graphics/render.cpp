@@ -103,10 +103,9 @@ static vector<Mesh*> vp1_Mesh3D_importedMeshes{};
 static Material* vp1_Material_groundText{};
 static Mesh* vp1_Mesh3D_groundTest{};
 
-static Text* vp1_Text_typeTest{};
-static Mesh* vp1_Mesh2D_typeTest{};
-
-static Mesh* vp1_Mesh2D_typeTestBackground{};
+static Text* vp1_Text_fps{};
+static Mesh* vp1_Mesh2D_fps{};
+static Mesh* vp1_Mesh2D_fpsBackground{};
 
 static path lastImportedMeshPath{};
 static vector<Mesh*> lastImportedMeshPtrs{};
@@ -266,72 +265,72 @@ namespace GraphicsTemplate::Graphics
         */
 
         //
-        // CREATE TEXT WIDGET
+        // CREATE FPS TEXT WIDGET
         //
 
-        vp1_Text_typeTest = Text::Initialize(
+        vp1_Text_fps = Text::Initialize(
             font->GetID(),
             viewport->GetID());
 
-        if (!vp1_Text_typeTest)
+        if (!vp1_Text_fps)
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
                 "Failed to create type test text!");
         }
         
-        //vp1_Text_typeTest->SetEditState(true);
-        vp1_Text_typeTest->SetMaxCharacters(50);
+        //vp1_Text_fps->SetEditState(true);
+        vp1_Text_fps->SetMaxCharacters(50);
 
-        err = Mesh::GetRegistry().GetContent(vp1_Text_typeTest->GetMeshID(), vp1_Mesh2D_typeTest);
+        err = Mesh::GetRegistry().GetContent(vp1_Text_fps->GetMeshID(), vp1_Mesh2D_fps);
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
                 "Failed to initialize text because its mesh '" 
-                + to_string(vp1_Text_typeTest->GetMeshID()) + "' was invalid! Reason: " + err);
+                + to_string(vp1_Text_fps->GetMeshID()) + "' was invalid! Reason: " + err);
         }
 
-        vp1_Mesh2D_typeTest->SetIgnoreHoverState(false);
+        vp1_Mesh2D_fps->SetIgnoreHoverState(false);
 
-        vp1_Mesh2D_typeTest->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
-        vp1_Mesh2D_typeTest->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_fps->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_fps->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
 
-        Material* typeTestMeshMat{};
-        err = Material::GetRegistry().GetContent(vp1_Mesh2D_typeTest->GetMaterialID(), typeTestMeshMat);
+        Material* fpsMeshMat{};
+        err = Material::GetRegistry().GetContent(vp1_Mesh2D_fps->GetMaterialID(), fpsMeshMat);
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
                 "Failed to initialize text because its mesh material '" 
-                + to_string(vp1_Mesh2D_typeTest->GetMaterialID()) + "' was invalid! Reason: " + err);
+                + to_string(vp1_Mesh2D_fps->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
-        typeTestMeshMat->SetBaseColor( vec4{0.0f, 0.0f, 0.0f, 1.0f} );
-        typeTestMeshMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
+        fpsMeshMat->SetBaseColor( vec4{0.0f, 0.0f, 0.0f, 1.0f} );
+        fpsMeshMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
 
-        vp1_Mesh2D_typeTestBackground = Mesh::Initialize(rectMat->GetID());
+        vp1_Mesh2D_fpsBackground = Mesh::Initialize(rectMat->GetID());
 
-        if (!vp1_Mesh2D_typeTestBackground)
+        if (!vp1_Mesh2D_fpsBackground)
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
                 "Failed to create type test text background!");
         }
 
-        vp1_Mesh2D_typeTestBackground->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
-        vp1_Mesh2D_typeTestBackground->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_fpsBackground->SetViewportAnchorPosition(AnchorPosition::TOP_LEFT);
+        vp1_Mesh2D_fpsBackground->SetSelfAnchorPosition(AnchorPosition::TOP_LEFT);
 
-        Material* typeTestBackgroundMat{};
-        err = Material::GetRegistry().GetContent(vp1_Mesh2D_typeTestBackground->GetMaterialID(), typeTestBackgroundMat);
+        Material* fpsBackgroundMat{};
+        err = Material::GetRegistry().GetContent(vp1_Mesh2D_fpsBackground->GetMaterialID(), fpsBackgroundMat);
         if (!err.empty())
         {
             KalaWindowCore::ForceClose(
                 "Game render error",
                 "Failed to initialize text because its background mesh material '" 
-                + to_string(vp1_Mesh2D_typeTestBackground->GetMaterialID()) + "' was invalid! Reason: " + err);
+                + to_string(vp1_Mesh2D_fpsBackground->GetMaterialID()) + "' was invalid! Reason: " + err);
         }
-        typeTestBackgroundMat->SetBaseColor( vec4{0.5f, 0.5f, 0.8f, 0.3f} );
-        typeTestBackgroundMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
+        fpsBackgroundMat->SetBaseColor( vec4{0.5f, 0.5f, 0.8f, 0.3f} );
+        fpsBackgroundMat->SetAlphaMode(AlphaMode::TYPE_BLEND);
 
         //sync after kg objects are done with initialization
         EngineCore::SyncID();
@@ -358,12 +357,12 @@ namespace GraphicsTemplate::Graphics
 
         string err = ImportMeshes(
             input, 
-            unlitMat);
+            primary3DShader);
         if (!err.empty())
         {
             Log::Print(
                 "Failed to import meshes! Reason: " + err,
-                "GAME_RENDER",
+                "BGE_RENDER",
                 LogType::LOG_WARNING);
         }
 
@@ -376,24 +375,24 @@ namespace GraphicsTemplate::Graphics
             && fps == "")
         {
             lastFPS = fps;
-            vp1_Text_typeTest->SetText("");
+            vp1_Text_fps->SetText("");
         }
         if (lastFPS != fps)
         {
             lastFPS = fps;
-            vp1_Text_typeTest->SetText(fps, true);
+            vp1_Text_fps->SetText(fps, true);
         }
 
-        Transform2D& typeTestTransform = scast<Transform2D&>(vp1_Mesh2D_typeTest->GetTransform());
-        Transform2D& typeTestBackgroundTransform = scast<Transform2D&>(vp1_Mesh2D_typeTestBackground->GetTransform());
+        Transform2D& fpsTransform = scast<Transform2D&>(vp1_Mesh2D_fps->GetTransform());
+        Transform2D& fpsBackgroundTransform = scast<Transform2D&>(vp1_Mesh2D_fpsBackground->GetTransform());
 
-        const vec2 textSize = typeTestTransform.getsize(SizeTarget::LOCAL);
-        const vec2 textBackgroundSize = typeTestBackgroundTransform.getsize(SizeTarget::LOCAL);
+        const vec2 textSize = fpsTransform.getsize(SizeTarget::LOCAL);
+        const vec2 textBackgroundSize = fpsBackgroundTransform.getsize(SizeTarget::LOCAL);
 
         if (textBackgroundSize != textSize)
         {
-            typeTestBackgroundTransform.setsize(textSize);
-            typeTestBackgroundTransform.update();
+            fpsBackgroundTransform.setsize(textSize);
+            fpsBackgroundTransform.update();
         }
 
         /*
@@ -515,7 +514,7 @@ namespace GraphicsTemplate::Graphics
 
         Log::Print(
             moveStr + transformStr,
-            "GAME_CAM_MOVE_TEST",
+            "BGE_RENDER",
             LogType::LOG_VERBOSE);
         */
 
@@ -531,10 +530,10 @@ namespace GraphicsTemplate::Graphics
 
     string Render::ImportMeshes(
         Input* input,
-        Material* material)
+        Shader* shader)
     {
         if (!input) return "Input was invalid!";
-        if (!material) return "Material was invalid!";
+        if (!shader) return "Shader was invalid!";
 
         if (input->IsKeyPressed(KeyboardButton::K_SPACE))
         {
@@ -586,7 +585,15 @@ namespace GraphicsTemplate::Graphics
             {
                 for (const ImportPrimitiveData& primitiveData : nodeData.primitiveData)
                 {
-                    Mesh* primitive = Mesh::Initialize(material->GetID());
+                    Material* mat = Material::Initialize(shader->GetID());
+                    if (!mat)
+                    {
+                        KalaWindowCore::ForceClose(
+                            "Game render error",
+                            "Failed to create mesh material!");
+                    }
+
+                    Mesh* primitive = Mesh::Initialize(mat->GetID());
 
                     if (!primitive)
                     {
@@ -594,15 +601,6 @@ namespace GraphicsTemplate::Graphics
                             "Game render error",
                             "Failed to import model '" + files.front().string() 
                             + "' because one of its primitives failed to initialize!");
-                    }
-
-                    Material* mat{};
-                    string err = Material::GetRegistry().GetContent(primitive->GetMaterialID(), mat);
-                    if (!err.empty())
-                    {
-                        KalaWindowCore::ForceClose(
-                            "Game render error",
-                            "Failed to initialize mesh because its material was invalid! Reason: " + err);
                     }
 
                     primitive->SetMeshData(
@@ -635,17 +633,7 @@ namespace GraphicsTemplate::Graphics
 
                     if (!matData.textureData.pixelData.empty())
                     {
-                        Shader* matShader{};
-                        string err = Shader::GetRegistry().GetContent(mat->GetShaderID(), matShader);
-                        if (!err.empty())
-                        {
-                            KalaWindowCore::ForceClose(
-                                "Game render error",
-                                "Failed to import meshes because material '" 
-                                + to_string(material->GetID()) + "' shader was invalid! Reason: " + err);
-                        }
-
-                        Texture* meshTex = Texture::Initialize(matShader->GetID());
+                        Texture* meshTex = Texture::Initialize(shader->GetID());
                         if (!meshTex)
                         {
                             KalaWindowCore::ForceClose(
@@ -683,7 +671,7 @@ namespace GraphicsTemplate::Graphics
             {
                 Log::Print(
                     "Failed to export meshes! Reason: " + err,
-                    "GAME_RENDER",
+                    "BGE_RENDER",
                     LogType::LOG_WARNING);
             }
         }

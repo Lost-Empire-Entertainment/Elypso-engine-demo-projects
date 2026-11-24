@@ -73,7 +73,7 @@ namespace GraphicsTemplate::Graphics
         KNODISCARD
         static string ImportMeshes(
             Input* input,
-            Material* material);
+            Shader* shader);
 
         //Returns error string on failure
         //runs once, temporarily combined with ImportMeshes
